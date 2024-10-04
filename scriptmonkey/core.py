@@ -1,6 +1,6 @@
 import sys
 import traceback
-from .openai_client import chatgpt_json, CodemonkeyResponse, default_prompts
+from .openai_client import chatgpt_json, ScriptMonkeyResponse, default_prompts
 from .file_handler import read_file, write_file
 import platform
 import threading
@@ -45,7 +45,7 @@ def codemonkey_exception_handler(exc_type, exc_value, exc_traceback):
 
     error_message = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
 
-    print(f"\n🐒 CodeMonkey Detected an Error:")
+    print(f"\n🐒 ScriptMonkey Detected an Error:")
     print(error_message, "\n")
 
     frame = traceback.extract_tb(exc_traceback)[-1]
@@ -55,17 +55,17 @@ def codemonkey_exception_handler(exc_type, exc_value, exc_traceback):
     content = f"{get_platform()}# Original Code:\n```\n{original_code}\n```\n\n# Error Message:\n{error_message}"
 
     solution = None
-    with Spinner("🐒 CodeMonkey is working on a solution"):
+    with Spinner("🐒 ScriptMonkey is working on a solution"):
         solution = chatgpt_json(
-            instructions=default_prompts.fix_error, content=content, response_format=CodemonkeyResponse
+            instructions=default_prompts.fix_error, content=content, response_format=ScriptMonkeyResponse
         )
 
-    print(f"\n🐒 CodeMonkey Fixed It:\nProblem:\n{solution['problem']}\n")
+    print(f"\n🐒 ScriptMonkey Fixed It:\nProblem:\n{solution['problem']}\n")
     print(f"Suggested Solution:\n{solution['solution']}\n")
 
     corrected_code = solution["corrected_code"].replace("```python", "").replace("```", "")
     write_file(file_path, corrected_code)
-    print(f"🐒 CodeMonkey automatically fixed your code at: '{file_path}'.")
+    print(f"🐒 ScriptMonkey automatically fixed your code at: '{file_path}'.")
 
 
 def run():
