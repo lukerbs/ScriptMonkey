@@ -11,10 +11,7 @@ setup(
     author_email="LDK.kerbs@gmail.com",
     license="MIT",
     packages=find_packages(),
-    install_requires=[
-        "openai",
-        "pydantic",
-    ],
+    install_requires=["openai", "pydantic", "tqdm"],
     python_requires=">=3.6",  # Minimum Python version
     classifiers=[
         "Programming Language :: Python :: 3",
