@@ -18,6 +18,6 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    package_data={"codemonkey.openai_client": ["prompts/*.txt"]},
+    package_data={"scriptmonkey.openai_client": ["prompts/*.txt"]},
     include_package_data=True,
 )
