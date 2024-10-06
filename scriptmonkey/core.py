@@ -1,6 +1,6 @@
 import sys
 import traceback
-from .openai_client import chatgpt_json, ScriptMonkeyResponse, ProjectStructureResponse, ProjectFile, default_prompts
+from .openai_client import chatgpt_json, chatgpt, ScriptMonkeyResponse, ProjectStructureResponse, ProjectFile, default_prompts
 from .openai_client.prompting import load_prompt
 from .file_handler import read_file, write_file
 import platform
@@ -94,10 +94,11 @@ def generate_project_structure(description: str) -> ProjectStructureResponse:
     
     return project_structure
 
-def create_project_structure(project_structure_response: dict):
+def create_project_structure(project_structure_response: dict, base_directory: str = "./generated_project"):
     """Creates the directories and files for the project based on the generated project structure, without overwriting existing ones."""
     for project_file in project_structure_response['files']:  # Access 'files' key in the dictionary
-        file_path = project_file['path']  # Get the file path
+        # Prepend the base directory to avoid writing to root
+        file_path = os.path.join(base_directory, project_file['path'].lstrip('/'))  # Remove leading '/' from the path
 
         # Check if it's a directory or file (directories end with '/')
         if file_path.endswith('/'):
@@ -113,6 +114,30 @@ def create_project_structure(project_structure_response: dict):
                 print(f"Created file: {file_path}")
             else:
                 print(f"File already exists, skipping: {file_path}")
+                
+
+def generate_code_for_file(file_description: dict) -> str:
+    """Generates code content for a given file based on its description using the chatgpt() function."""
+    # Prepare instructions for OpenAI to generate code based on the file description
+    instructions = (
+        "Generate well-structured Python code based on the following file description. "
+        "Ensure the code follows PEP8 standards, includes type hints, and contains relevant docstrings."
+        f"\n\nFile Description: {file_description['description']}"
+    )
+
+    # Check if the file has functions to include in the code
+    if file_description.get('functions'):
+        instructions += "\n\nFunctions:\n"
+        for function in file_description['functions']:
+            instructions += (
+                f"- {function['function_name']}: {function['description']} "
+                f"(Inputs: {function['inputs']}, Outputs: {function['outputs']})\n"
+            )
+
+    # Call the chatgpt function to generate the code
+    generated_code = chatgpt(prompt=instructions)
+    
+    return generated_code
 
 
 # Example usage
@@ -120,6 +145,11 @@ if __name__ == "__main__":
     project_description = load_prompt(path="./prompts/project_description.txt")  # Adjust path if needed
     print(f"Project Description: {project_description}")
 
+    # Step 2: Generate the project structure using OpenAI API
     project_structure = generate_project_structure(project_description)
     print(f"\nGenerated Project Structure:")
     pprint(project_structure)
+
+    # Step 3: Create the project structure (directories and files) on the filesystem
+    create_project_structure(project_structure)
+    print("Project structure creation complete.")

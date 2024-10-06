@@ -1,5 +1,5 @@
 from .prompting import DefaultPrompts
-from .client import chatgpt_json
+from .client import chatgpt_json, chatgpt
 from pydantic import BaseModel
 from typing import List, Optional
 
