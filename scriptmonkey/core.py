@@ -1,11 +1,14 @@
 import sys
 import traceback
-from .openai_client import chatgpt_json, ScriptMonkeyResponse, default_prompts
+from .openai_client import chatgpt_json, ScriptMonkeyResponse, ProjectStructureResponse, ProjectFile, default_prompts
+from .openai_client.prompting import load_prompt
 from .file_handler import read_file, write_file
 import platform
 import threading
 import itertools
 import time
+from pprint import pprint
+import os
 
 
 def get_platform():
@@ -70,3 +73,53 @@ def codemonkey_exception_handler(exc_type, exc_value, exc_traceback):
 
 def run():
     sys.excepthook = codemonkey_exception_handler
+
+# - - - - - NEW FEATURES - - - - -
+
+def generate_project_structure(description: str) -> ProjectStructureResponse:
+    """Generates the project structure based on the user's project description using OpenAI."""
+    instructions = (
+        "Generate a detailed project structure for a multi-level application. The response should include:"
+        "\n- A list of directories and files with full paths."
+        "\n- Descriptions of each file and directory."
+        "\n- If the file is a code file, list any functions/classes it contains, along with the inputs, outputs, and descriptions."
+    )
+
+    # Call the chatgpt_json function to get structured project plan
+    project_structure = chatgpt_json(
+        instructions=instructions, 
+        content=description, 
+        response_format=ProjectStructureResponse
+    )
+    
+    return project_structure
+
+def create_project_structure(project_structure_response: dict):
+    """Creates the directories and files for the project based on the generated project structure, without overwriting existing ones."""
+    for project_file in project_structure_response['files']:  # Access 'files' key in the dictionary
+        file_path = project_file['path']  # Get the file path
+
+        # Check if it's a directory or file (directories end with '/')
+        if file_path.endswith('/'):
+            # Create directory if it doesn't already exist
+            os.makedirs(file_path, exist_ok=True)
+            print(f"Created directory: {file_path}")
+        else:
+            # Create an empty file if it doesn't already exist
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)  # Ensure directory exists
+            if not os.path.exists(file_path):  # Only create file if it doesn't exist
+                with open(file_path, 'w') as f:
+                    pass  # Create an empty file
+                print(f"Created file: {file_path}")
+            else:
+                print(f"File already exists, skipping: {file_path}")
+
+
+# Example usage
+if __name__ == "__main__":
+    project_description = load_prompt(path="./prompts/project_description.txt")  # Adjust path if needed
+    print(f"Project Description: {project_description}")
+
+    project_structure = generate_project_structure(project_description)
+    print(f"\nGenerated Project Structure:")
+    pprint(project_structure)

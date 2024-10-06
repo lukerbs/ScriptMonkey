@@ -1,0 +1,1 @@
+Build a Flask web application with user authentication, a PostgreSQL database, and an admin dashboard.
