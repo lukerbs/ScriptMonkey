@@ -11,6 +11,12 @@ ScriptMonkey is an AI-powered Python package that reimagines how projects are bu
 - **Code Auto-Correction**: Automatically updates your Python files with the fixes.
 - **Cross-IDE Compatibility**: Works with any IDE or code editor.
 
+## 🚀 Watch the Demo
+
+[![ScriptMonkey Demo](https://img.youtube.com/vi/2zoCDlf0Zf8/maxresdefault.jpg)](https://youtu.be/2zoCDlf0Zf8)
+
+Click the image above or watch the video directly on [YouTube](https://youtu.be/2zoCDlf0Zf8).
+
 ## Installation
 
 To install ScriptMonkey, simply run:
