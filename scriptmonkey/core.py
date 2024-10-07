@@ -228,9 +228,15 @@ def generate_project_structure(description: str) -> ProjectStructureResponse:
     return project_structure
 
 
-def create_project_structure(project_structure_response: dict, base_directory: str = "./generated_project"):
-    """Creates the directories and files for the project and generates code content for code files."""
-    for project_file in project_structure_response["files"]:
+def create_project_structure(
+    project_structure_response: dict, project_description: str, base_directory: str = "./generated_project"
+):
+    """Creates the directories and files for the project and generates code content for all file types."""
+    # Extract the list of project files for context
+    project_files = project_structure_response["files"]
+
+    # Iterate through each file in the project structure
+    for project_file in project_files:
         file_path = os.path.join(base_directory, project_file["path"].lstrip("/"))
 
         # Check if it's a directory or file (directories end with '/')
@@ -240,23 +246,16 @@ def create_project_structure(project_structure_response: dict, base_directory: s
         else:
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
-            # If it's a Python code file, generate code and write to the file
-            if file_path.endswith(".py"):
-                generated_code = generate_code_for_file(project_file)
-                if not os.path.exists(file_path):
-                    with open(file_path, "w") as f:
-                        f.write(generated_code)
-                    print(f"🐒 ScriptMonkey created file with generated code at: '{file_path}'.")
-                else:
-                    print(f"File already exists, skipping: {file_path}")
+            # Generate content for all files, including Python, HTML, JSON, CSS, etc.
+            generated_content = generate_code_for_file(project_file, project_description, project_files)
+
+            # Write the generated content to the file if it doesn't already exist
+            if not os.path.exists(file_path):
+                with open(file_path, "w") as f:
+                    f.write(generated_content)
+                print(f"🐒 ScriptMonkey created file with generated content at: '{file_path}'.")
             else:
-                # Create other file types (HTML, CSS, etc.)
-                if not os.path.exists(file_path):
-                    with open(file_path, "w") as f:
-                        pass  # Create an empty file for non-code files
-                    print(f"🐒 ScriptMonkey reated file: {file_path}")
-                else:
-                    print(f"File already exists, skipping: {file_path}")
+                print(f"File already exists, skipping: {file_path}")
 
 
 def gather_project_context(project_description: str, project_files: list) -> str:
@@ -341,7 +340,6 @@ def generate_readme(description: str, project_structure: dict) -> str:
     return readme_content
 
 
-# Example usage
 def main():
     if len(sys.argv) > 1 and sys.argv[1] == "--set-api-key":
         update_api_key()
@@ -366,7 +364,7 @@ def main():
 
         # Step 3: Create the project structure (directories and files) on the filesystem
         print(f"\n🐒 ScriptMonkey is coding...")
-        create_project_structure(project_structure)
+        create_project_structure(project_structure_response=project_structure, project_description=project_description)
         print("\nProject structure creation complete.")
 
         # Step 4: Generate the README.md content based on the project description and structure
