@@ -283,29 +283,39 @@ def gather_project_context(project_description: str, project_files: list) -> str
 
 def generate_code_for_file(file_description: dict, project_description: str, project_files: list) -> str:
     """
-    Generates code content for a given file based on its description using the chatgpt() function.
+    Generates content for a given file based on its description using the chatgpt() function.
 
     Args:
-        file_description (dict): The description of the file for which code is being generated.
+        file_description (dict): The description of the file for which content is being generated.
         project_description (str): A high-level description of the project's purpose and goals.
         project_files (list): List of all project files for context.
 
     Returns:
-        str: The generated Python code.
+        str: The generated content for the file.
     """
     # Gather context about the project goal and other files
     context = gather_project_context(project_description, project_files)
 
-    # Prepare instructions for OpenAI to generate code based on the file description
+    # Extract the file extension to inform the content type
+    file_extension = os.path.splitext(file_description["path"])[1].lower().strip(".")
+
+    # Dynamically adjust the content type description based on the file extension
+    if file_extension:
+        content_type_description = f"{file_extension.upper()} file content"
+    else:
+        content_type_description = "text content"
+
+    # Prepare instructions for OpenAI to generate content based on the file description and type
     instructions = (
-        "Write the complete Python code for the following file, considering the context of the entire project. "
-        "Use relevant imports and cross-file references where necessary. Do not add extra commentary or explanation."
-        "\nEnsure the code follows PEP8 standards, includes type hints, and contains relevant docstrings."
+        f"Write the complete content for a {content_type_description} that fulfills the following requirements. "
+        "Consider the context of the entire project when generating the content and make use of imports where available and appropriate."
+        "Use relevant imports, references, and appropriate formatting or structure where necessary. Do not add extra commentary or explanation. "
+        "Make sure to return the content directly, without wrapping it in any code fences like triple quotes or backticks."
         f"\n\nFile Description: {file_description['description']}"
         f"\n\n{context}\n"
     )
 
-    # Check if the file has functions to include in the code
+    # Include functions for code files (if provided)
     if file_description.get("functions"):
         instructions += "\n\nFunctions:\n"
         for function in file_description["functions"]:
@@ -314,14 +324,14 @@ def generate_code_for_file(file_description: dict, project_description: str, pro
                 f"(Inputs: {function['inputs']}, Outputs: {function['outputs']})\n"
             )
 
-    # Call the chatgpt function to generate the code
-    generated_code = chatgpt(prompt=instructions)
+    # Call the chatgpt function to generate the content
+    generated_content = chatgpt(prompt=instructions)
 
-    # Strip out any unintended extra explanations that might still slip through
-    if "```python" in generated_code:
-        generated_code = generated_code.split("```python")[1].split("```")[0].strip()
+    # Clean up any unintended code blocks
+    if f"```{file_extension}" in generated_content:
+        generated_content = generated_content.split(f"```{file_extension}")[1].split("```")[0].strip()
 
-    return generated_code
+    return generated_content
 
 
 def generate_readme(description: str, project_structure: dict) -> str:

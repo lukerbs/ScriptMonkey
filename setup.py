@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="scriptmonkey",
-    version="1.0.2",
+    version="1.0.3",
     description="A Python package that generates complex Python projects and fixes errors in your code using OpenAI's GPT API.",
     long_description=open("README.md", "r").read(),
     long_description_content_type="text/markdown",
