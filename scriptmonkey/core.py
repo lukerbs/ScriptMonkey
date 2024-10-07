@@ -1,6 +1,13 @@
 import sys
 import traceback
-from .openai_client import chatgpt_json, chatgpt, ScriptMonkeyResponse, ProjectStructureResponse, ProjectFile, default_prompts
+from .openai_client import (
+    chatgpt_json,
+    chatgpt,
+    ScriptMonkeyResponse,
+    ProjectStructureResponse,
+    ProjectFile,
+    default_prompts,
+)
 from .openai_client.prompting import load_prompt
 from .file_handler import read_file, write_file
 import platform
@@ -13,10 +20,12 @@ from pprint import pprint
 import os
 import platform
 
+
 def get_platform():
     os_name = platform.system()
     os_version = platform.release()
     return f"# Operating System: {os_name}, Version: {os_version}\n\n"
+
 
 class Spinner:
     def __init__(self, message="Processing"):
@@ -40,6 +49,7 @@ class Spinner:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.stop_running.set()
         self.spin_thread.join()
+
 
 def codemonkey_exception_handler(exc_type, exc_value, exc_traceback):
     if issubclass(exc_type, KeyboardInterrupt):
@@ -77,36 +87,39 @@ def run():
 
 # - - - - - API KEY MANAGEMENT - - - - -
 
+
 def save_api_key(api_key: str):
     """Save the OpenAI API key to the configuration file and environment variable."""
-    with open(CONFIG_FILE, 'w') as file:
+    with open(CONFIG_FILE, "w") as file:
         file.write(api_key)
-    os.environ['OPENAI_API_KEY'] = api_key
+    os.environ["OPENAI_API_KEY"] = api_key
     print(f"✅ OpenAI API key saved to {CONFIG_FILE}.")
+
 
 def get_openai_api_key() -> str:
     """Retrieve the OpenAI API key from environment or configuration file."""
-    api_key = os.getenv('OPENAI_API_KEY')
-    
+    api_key = os.getenv("OPENAI_API_KEY")
+
     if not api_key:
         # Check for API key in the configuration file
         if os.path.exists(CONFIG_FILE):
-            with open(CONFIG_FILE, 'r') as file:
+            with open(CONFIG_FILE, "r") as file:
                 api_key = file.read().strip()
 
     # Prompt user for API key if not found
     if not api_key:
         print("🐒 ScriptMonkey requires an OpenAI API key to function.")
         api_key = getpass.getpass("Please enter your OpenAI API key (input hidden): ")
-        
+
         if api_key:
             save_api_key(api_key)
-    
+
     if not api_key:
         print("❌ No API key provided. Exiting ScriptMonkey.")
         sys.exit(1)
-    
+
     return api_key
+
 
 def update_api_key():
     """Prompt the user to update the OpenAI API key."""
@@ -117,7 +130,9 @@ def update_api_key():
     else:
         print("❌ No API key provided. The API key was not updated.")
 
+
 # - - - - - NEW FEATURES - - - - -
+
 
 def get_multiline_input_with_editor() -> str:
     """
@@ -127,17 +142,17 @@ def get_multiline_input_with_editor() -> str:
     """
     with tempfile.NamedTemporaryFile(suffix=".txt") as temp_file:
         # Detect the editor from the environment or default based on the OS
-        editor = os.environ.get('EDITOR')
+        editor = os.environ.get("EDITOR")
 
         # If no editor is set, choose a default based on the platform
         if not editor:
-            if platform.system() == 'Windows':
-                editor = 'notepad'
+            if platform.system() == "Windows":
+                editor = "notepad"
             else:
-                editor = 'nano'  # Default for Unix-like systems
+                editor = "nano"  # Default for Unix-like systems
 
         # Adjust instructions based on the detected editor
-        if 'vim' in editor.lower():
+        if "vim" in editor.lower():
             instructions = (
                 "!# 🐒 Welcome to ScriptMonkey's project generator!\n"
                 "!# Please describe your project in detail below.\n"
@@ -145,21 +160,21 @@ def get_multiline_input_with_editor() -> str:
                 "!# type ':wq' to save and exit.\n"
                 "!# (Lines starting with '!#' will be ignored.)\n\n"
             )
-        elif 'nano' in editor.lower():
+        elif "nano" in editor.lower():
             instructions = (
                 "!# 🐒 Welcome to ScriptMonkey's project generator!\n"
                 "!# Please describe your project in detail below.\n"
                 "!# When you're done, press 'Ctrl+O' to save and 'Ctrl+X' to exit.\n"
                 "!# (Lines starting with '!#' will be ignored.)\n\n"
             )
-        elif 'notepad' in editor.lower():
+        elif "notepad" in editor.lower():
             instructions = (
                 "!# 🐒 Welcome to ScriptMonkey's project generator!\n"
                 "!# Please describe your project in detail below.\n"
                 "!# When you're done, save and close the Notepad window.\n"
                 "!# (Lines starting with '!#' will be ignored.)\n\n"
             )
-        elif 'code' in editor.lower():
+        elif "code" in editor.lower():
             instructions = (
                 "!# 🐒 Welcome to ScriptMonkey's project generator!\n"
                 "!# Please describe your project in detail below.\n"
@@ -175,7 +190,7 @@ def get_multiline_input_with_editor() -> str:
             )
 
         # Write the instructions to the temporary file
-        temp_file.write(instructions.encode('utf-8'))
+        temp_file.write(instructions.encode("utf-8"))
         temp_file.flush()
 
         # Open the temporary file in the detected editor
@@ -183,10 +198,11 @@ def get_multiline_input_with_editor() -> str:
 
         # Read the user's input, ignoring lines starting with '!#'
         temp_file.seek(0)
-        user_input = temp_file.read().decode('utf-8')
+        user_input = temp_file.read().decode("utf-8")
         user_input = "\n".join(line for line in user_input.splitlines() if not line.startswith("!#"))
 
     return user_input.strip()
+
 
 def generate_project_structure(description: str) -> ProjectStructureResponse:
     """Generates the project structure based on the user's project description using OpenAI."""
@@ -206,30 +222,29 @@ def generate_project_structure(description: str) -> ProjectStructureResponse:
 
     # Call the chatgpt_json function to get structured project plan
     project_structure = chatgpt_json(
-        instructions=instructions, 
-        content=description, 
-        response_format=ProjectStructureResponse
+        instructions=instructions, content=description, response_format=ProjectStructureResponse
     )
-    
+
     return project_structure
+
 
 def create_project_structure(project_structure_response: dict, base_directory: str = "./generated_project"):
     """Creates the directories and files for the project and generates code content for code files."""
-    for project_file in project_structure_response['files']:
-        file_path = os.path.join(base_directory, project_file['path'].lstrip('/'))
+    for project_file in project_structure_response["files"]:
+        file_path = os.path.join(base_directory, project_file["path"].lstrip("/"))
 
         # Check if it's a directory or file (directories end with '/')
-        if file_path.endswith('/'):
+        if file_path.endswith("/"):
             os.makedirs(file_path, exist_ok=True)
             print(f"🐒 ScriptMonkey created directory: {file_path}")
         else:
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
             # If it's a Python code file, generate code and write to the file
-            if file_path.endswith('.py'):
+            if file_path.endswith(".py"):
                 generated_code = generate_code_for_file(project_file)
                 if not os.path.exists(file_path):
-                    with open(file_path, 'w') as f:
+                    with open(file_path, "w") as f:
                         f.write(generated_code)
                     print(f"🐒 ScriptMonkey created file with generated code at: '{file_path}'.")
                 else:
@@ -237,26 +252,64 @@ def create_project_structure(project_structure_response: dict, base_directory: s
             else:
                 # Create other file types (HTML, CSS, etc.)
                 if not os.path.exists(file_path):
-                    with open(file_path, 'w') as f:
+                    with open(file_path, "w") as f:
                         pass  # Create an empty file for non-code files
                     print(f"🐒 ScriptMonkey reated file: {file_path}")
                 else:
                     print(f"File already exists, skipping: {file_path}")
 
 
-def generate_code_for_file(file_description: dict) -> str:
-    """Generates code content for a given file based on its description using the chatgpt() function."""
+def gather_project_context(project_description: str, project_files: list) -> str:
+    """
+    Gathers a summary of the project goal and all existing files with their key functions or classes.
+
+    Args:
+        project_description (str): A high-level description of the project's purpose and goals.
+        project_files (list): List of project file descriptions.
+
+    Returns:
+        str: A summary of the project goal and existing modules, classes, and functions.
+    """
+    context = f"Project Goal: {project_description}\n\n"
+    context += "Project Context:\n"
+    for file in project_files:
+        if file["functions"]:
+            context += f"- In '{file['path']}', the following functions are defined:\n"
+            for function in file["functions"]:
+                context += f"  - {function['function_name']}: {function['description']} (Inputs: {function['inputs']}, Outputs: {function['outputs']})\n"
+        else:
+            context += f"- '{file['path']}' is defined with no specific functions listed.\n"
+    return context
+
+
+def generate_code_for_file(file_description: dict, project_description: str, project_files: list) -> str:
+    """
+    Generates code content for a given file based on its description using the chatgpt() function.
+
+    Args:
+        file_description (dict): The description of the file for which code is being generated.
+        project_description (str): A high-level description of the project's purpose and goals.
+        project_files (list): List of all project files for context.
+
+    Returns:
+        str: The generated Python code.
+    """
+    # Gather context about the project goal and other files
+    context = gather_project_context(project_description, project_files)
+
     # Prepare instructions for OpenAI to generate code based on the file description
     instructions = (
-        "Write the complete Python code based on the following file description without adding any additional commentary or explanation. "
-        "Ensure the code follows PEP8 standards, includes type hints, and contains relevant docstrings."
+        "Write the complete Python code for the following file, considering the context of the entire project. "
+        "Use relevant imports and cross-file references where necessary. Do not add extra commentary or explanation."
+        "\nEnsure the code follows PEP8 standards, includes type hints, and contains relevant docstrings."
         f"\n\nFile Description: {file_description['description']}"
+        f"\n\n{context}\n"
     )
 
     # Check if the file has functions to include in the code
-    if file_description.get('functions'):
+    if file_description.get("functions"):
         instructions += "\n\nFunctions:\n"
-        for function in file_description['functions']:
+        for function in file_description["functions"]:
             instructions += (
                 f"- {function['function_name']}: {function['description']} "
                 f"(Inputs: {function['inputs']}, Outputs: {function['outputs']})\n"
@@ -264,12 +317,13 @@ def generate_code_for_file(file_description: dict) -> str:
 
     # Call the chatgpt function to generate the code
     generated_code = chatgpt(prompt=instructions)
-    
+
     # Strip out any unintended extra explanations that might still slip through
     if "```python" in generated_code:
         generated_code = generated_code.split("```python")[1].split("```")[0].strip()
-    
+
     return generated_code
+
 
 def generate_readme(description: str, project_structure: dict) -> str:
     """Generates a README.md content based on the project description and structure."""
@@ -289,7 +343,7 @@ def generate_readme(description: str, project_structure: dict) -> str:
 
 # Example usage
 def main():
-    if len(sys.argv) > 1 and sys.argv[1] == '--set-api-key':
+    if len(sys.argv) > 1 and sys.argv[1] == "--set-api-key":
         update_api_key()
     else:
         print(f"\n- - 🐒 WELCOME TO SCRIPT MONKEY 🐒 - - -\n")
@@ -299,7 +353,9 @@ def main():
         # Step 1: Get multi-line project description from user
         project_description = get_multiline_input_with_editor()
         if not project_description:
-            print(f"\nNo Project Description Provided (Tip: Did you save before closing the editor?).\n🐒 Quitting ScriptMonkey...")
+            print(
+                f"\nNo Project Description Provided (Tip: Did you save before closing the editor?).\n🐒 Quitting ScriptMonkey..."
+            )
             exit()
         print(f"Project Description: {project_description}")
 
@@ -316,6 +372,6 @@ def main():
         # Step 4: Generate the README.md content based on the project description and structure
         readme_content = generate_readme(project_description, project_structure)
         readme_path = "./generated_project/README.md"
-        with open(readme_path, 'w') as readme_file:
+        with open(readme_path, "w") as readme_file:
             readme_file.write(readme_content)
         print(f"🐒 ScriptMonkey wrote a README.md file at: '{readme_path}'")
