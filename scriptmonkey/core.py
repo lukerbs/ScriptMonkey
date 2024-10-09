@@ -362,15 +362,15 @@ def generate_readme(description: str, project_structure: dict) -> str:
 
 def ask_gpt_with_files(question, file_paths):
     """
-    Constructs a detailed prompt for ChatGPT using a question and optionally including content from specified files.
+    Constructs a detailed and flexible prompt for ChatGPT using a question and optionally including content from specified files.
     """
     prompt = (
         f"### Question:\n"
         f"{question}\n\n"
-        "I have provided some code files below that might help you understand the context of my question. "
-        "The question could relate to any programming language or framework, and I am looking for an in-depth explanation, suggestions, or improvements based on the content provided. "
-        "Please analyze the provided files, and if the response includes code, format the code blocks using backticks and label them with the appropriate language for better readability. "
-        "The answer should be in Markdown format to preserve structure and readability.\n\n"
+        "If I have included any files below, you can use them for additional context for this question. "
+        "Please analyze the provided files below (if available) as needed and reference them when forming your answer. "
+        "If the answer involves code, please format any code examples using Markdown with properly labeled language-specific code blocks. "
+        "Your response should be in Markdown format to preserve readability.\n\n"
     )
 
     if file_paths:
@@ -391,22 +391,21 @@ def ask_gpt_with_files(question, file_paths):
     else:
         prompt += (
             "No specific files have been provided, so please base your response solely on the question above. "
-            "If the response includes any code examples or suggestions, format them using Markdown with language-specific code blocks for clarity.\n"
+            "If the response includes any code examples or technical explanations, please use Markdown formatting with language-specific code blocks for clarity.\n"
         )
 
     # Output the constructed prompt to the console for transparency
-    console.rule("🐒 ScriptMonkey is sending the following prompt to ChatGPT:")
-    console.print(Markdown(prompt))
+    console.rule("🐒 ScriptMonkey is Thinking 🐒")
     console.rule()
 
     # Use the OpenAI API to get a response
     try:
         response = chatgpt(prompt=prompt)
-
         # Display the response using rich markdown and detect code blocks
-        console.rule("ChatGPT Response")
+        console.rule("🐒 ScriptMonkey Response 🐒")
         render_response_with_syntax_highlighting(response)
-        console.rule("End of ChatGPT Response")
+        console.print("\n")
+        console.rule()
     except Exception as e:
         console.print(f"[bold red]Error using OpenAI API: {e}[/bold red]")
 
@@ -431,7 +430,9 @@ def render_response_with_syntax_highlighting(response):
 
         # Print the code block with syntax highlighting
         syntax = Syntax(code_content, language, theme="monokai", line_numbers=True)
+        console.print("\n")
         console.print(syntax)
+        console.print("\n")
 
         last_pos = match.end()
 

@@ -10,6 +10,7 @@ ScriptMonkey is an AI-powered Python package that reimagines how projects are bu
 - **AI-Powered Fixes**: Uses OpenAI's GPT API to understand and resolve errors.
 - **Code Auto-Correction**: Automatically updates your Python files with the fixes.
 - **Cross-IDE Compatibility**: Works with any IDE or code editor.
+- **Context-Aware Q&A**: Ask questions directly to ChatGPT with or without providing files for context. Get detailed answers with code examples, explanations, and best practices tailored to your needs.
 
 ## 🚀 Watch the Demo
 
@@ -27,7 +28,7 @@ pip install scriptmonkey
 
 ## Usage
 
-### Project Generation with `python3 -m scriptmonkey`
+### Project Generation with `scriptmonkey`
 
 ScriptMonkey can generate a complete, custom-coded project structure based on a description you provide. This feature helps you quickly set up new projects with the necessary files and folders.
 
@@ -36,7 +37,7 @@ ScriptMonkey can generate a complete, custom-coded project structure based on a 
 1. Run the following command in your terminal:
 
    ```bash
-   python3 -m scriptmonkey
+   scriptmonkey
    ```
 
 2. A text editor will open (e.g., `nano`, `vim`, or `notepad` depending on your environment). Follow the on-screen instructions to provide a detailed description of your project.
@@ -60,6 +61,26 @@ I need a Flask-based web application for managing a book library. The applicatio
 ```
 
 ScriptMonkey will use this description to create a project structure and code files for you in a directory named `generated_project`.
+
+### Context-Aware Q&A with `scriptmonkey --ask`
+
+ScriptMonkey can help answer your technical questions, whether or not you provide code files for context. This feature allows you to leverage the power of ChatGPT to ask questiona about files, clarify concepts, get code reviews, or understand best practices in various programming languages.
+
+#### How to Use
+
+- **Ask a question without files**:
+
+  ```bash
+  scriptmonkey --ask "What are the best practices for database indexing?"
+  ```
+
+- **Ask a question with files**:
+
+  ```bash
+  scriptmonkey --ask "Can you help me optimize this function?" --files ./path/to/file1.py ./path/to/file2.js
+  ```
+
+  ScriptMonkey will analyze your question and any provided files to give a detailed, markdown-formatted response with explanations and code suggestions, if applicable. This feature is great for in-depth guidance on code optimization, architecture, or general programming questions.
 
 ### Error Handling with `scriptmonkey.run()`
 

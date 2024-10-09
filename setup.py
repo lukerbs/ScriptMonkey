@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="scriptmonkey",
-    version="1.0.3",
+    version="1.2.0",
     description="A Python package that generates complex Python projects and fixes errors in your code using OpenAI's GPT API.",
     long_description=open("README.md", "r").read(),
     long_description_content_type="text/markdown",
@@ -11,7 +11,7 @@ setup(
     author_email="LDK.kerbs@gmail.com",
     license="MIT",
     packages=find_packages(),
-    install_requires=["openai", "pydantic", "tqdm", "python-dotenv"],
+    install_requires=["openai", "pydantic", "tqdm", "python-dotenv", "rich"],
     python_requires=">=3.6",
     entry_points={
         "console_scripts": [
