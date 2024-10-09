@@ -429,7 +429,7 @@ def render_response_with_syntax_highlighting(response):
             console.print(Markdown(pre_text))
 
         # Print the code block with syntax highlighting
-        syntax = Syntax(code_content, language, theme="monokai", line_numbers=True)
+        syntax = Syntax(f"\n{code_content}", language, theme="monokai", line_numbers=True)
         console.print("\n")
         console.print(syntax)
         console.print("\n")
