@@ -9,26 +9,28 @@ CONFIG_FILE = os.path.expanduser("~/.scriptmonkey_config")
 # Load environment variables from the .env file if present
 load_dotenv()
 
+
 def get_openai_api_key():
     # Try to get the API key from environment variables
     api_key = os.getenv("OPENAI_API_KEY")
-    
+
     # If not set, check the config file
     if not api_key and os.path.exists(CONFIG_FILE):
-        with open(CONFIG_FILE, 'r') as f:
+        with open(CONFIG_FILE, "r") as f:
             api_key = f.read().strip()
 
     # If still not set, prompt the user for it
     if not api_key:
         print("It looks like your OpenAI API key isn't set.")
         api_key = input("🐒 Please paste your OpenAI API key here and press ENTER: ").strip()
-        
+
         # Save the key to the config file for future use
-        with open(CONFIG_FILE, 'w') as f:
+        with open(CONFIG_FILE, "w") as f:
             f.write(api_key)
         print(f"Your API key has been saved to {CONFIG_FILE} for future use.")
 
     return api_key
+
 
 # Get the OpenAI API key using the function
 OPENAI_API_KEY = get_openai_api_key()

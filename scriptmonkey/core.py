@@ -1,5 +1,6 @@
 import sys
 import traceback
+import argparse
 from .openai_client import (
     chatgpt_json,
     chatgpt,
@@ -19,6 +20,15 @@ import time
 from pprint import pprint
 import os
 import platform
+
+import re
+from rich.console import Console
+from rich.markdown import Markdown
+from rich.syntax import Syntax
+
+console = Console()
+
+CONFIG_FILE = os.path.expanduser("~/.scriptmonkey_config")
 
 
 def get_platform():
@@ -109,7 +119,7 @@ def get_openai_api_key() -> str:
     # Prompt user for API key if not found
     if not api_key:
         print("🐒 ScriptMonkey requires an OpenAI API key to function.")
-        api_key = getpass.getpass("Please enter your OpenAI API key (input hidden): ")
+        api_key = input("Please enter your OpenAI API key: ")
 
         if api_key:
             save_api_key(api_key)
@@ -123,7 +133,7 @@ def get_openai_api_key() -> str:
 
 def update_api_key():
     """Prompt the user to update the OpenAI API key."""
-    api_key = getpass.getpass("Enter the new OpenAI API key (input hidden): ")
+    api_key = input("Enter the new OpenAI API key: ")
     if api_key:
         save_api_key(api_key)
         print("✅ OpenAI API key updated successfully.")
@@ -350,11 +360,106 @@ def generate_readme(description: str, project_structure: dict) -> str:
     return readme_content
 
 
-def main():
-    if len(sys.argv) > 1 and sys.argv[1] == "--set-api-key":
-        update_api_key()
+def ask_gpt_with_files(question, file_paths):
+    """
+    Constructs a detailed prompt for ChatGPT using a question and optionally including content from specified files.
+    """
+    prompt = (
+        f"### Question:\n"
+        f"{question}\n\n"
+        "I have provided some code files below that might help you understand the context of my question. "
+        "The question could relate to any programming language or framework, and I am looking for an in-depth explanation, suggestions, or improvements based on the content provided. "
+        "Please analyze the provided files, and if the response includes code, format the code blocks using backticks and label them with the appropriate language for better readability. "
+        "The answer should be in Markdown format to preserve structure and readability.\n\n"
+    )
+
+    if file_paths:
+        prompt += "### Files Provided:\n"
+        for path in file_paths:
+            try:
+                content = read_file(path)
+                prompt += (
+                    f"## File: {path}\n"
+                    f"The content of the file '{path}' is included below. Use this as context for answering the question:\n\n"
+                    f"```\n{content}\n```\n\n"
+                )
+            except FileNotFoundError:
+                console.print(f"[bold yellow]Warning: {path} not found. Skipping this file.[/bold yellow]")
+            except Exception as e:
+                console.print(f"[bold red]Error reading {path}: {e}[/bold red]")
+
     else:
-        print(f"\n- - 🐒 WELCOME TO SCRIPT MONKEY 🐒 - - -\n")
+        prompt += (
+            "No specific files have been provided, so please base your response solely on the question above. "
+            "If the response includes any code examples or suggestions, format them using Markdown with language-specific code blocks for clarity.\n"
+        )
+
+    # Output the constructed prompt to the console for transparency
+    console.rule("🐒 ScriptMonkey is sending the following prompt to ChatGPT:")
+    console.print(Markdown(prompt))
+    console.rule()
+
+    # Use the OpenAI API to get a response
+    try:
+        response = chatgpt(prompt=prompt)
+
+        # Display the response using rich markdown and detect code blocks
+        console.rule("ChatGPT Response")
+        render_response_with_syntax_highlighting(response)
+        console.rule("End of ChatGPT Response")
+    except Exception as e:
+        console.print(f"[bold red]Error using OpenAI API: {e}[/bold red]")
+
+
+def render_response_with_syntax_highlighting(response):
+    """
+    Render a ChatGPT response with syntax highlighting for detected code blocks.
+    """
+    # Regular expression to detect code blocks with a specified language (e.g., ```python)
+    code_block_pattern = re.compile(r"```(\w+)?\n(.*?)```", re.DOTALL)
+    last_pos = 0
+
+    # Iterate over all detected code blocks
+    for match in code_block_pattern.finditer(response):
+        language = match.group(1) or "text"  # Default to 'text' if no language is specified
+        code_content = match.group(2)
+
+        # Print any text before the code block as markdown
+        if match.start() > last_pos:
+            pre_text = response[last_pos : match.start()]
+            console.print(Markdown(pre_text))
+
+        # Print the code block with syntax highlighting
+        syntax = Syntax(code_content, language, theme="monokai", line_numbers=True)
+        console.print(syntax)
+
+        last_pos = match.end()
+
+    # Print any remaining text after the last code block
+    if last_pos < len(response):
+        console.print(Markdown(response[last_pos:]))
+
+
+def main():
+    parser = argparse.ArgumentParser(description="ScriptMonkey - Generate Python projects and fix code.")
+    parser.add_argument("--ask", help="Ask a question to ChatGPT", type=str)
+    parser.add_argument("--files", nargs="*", help="Paths to files to include in the prompt", type=str)
+    parser.add_argument("--set-api-key", help="Set the OpenAI API key", action="store_true")
+    args = parser.parse_args()
+    print(f"\n- - 🐒 WELCOME TO SCRIPT MONKEY 🐒 - - -\n")
+
+    if args.set_api_key:
+        # Handle setting the API key
+        update_api_key()
+        return
+
+    if args.ask:
+        # Handle the --ask functionality
+        question = args.ask
+        file_paths = args.files if args.files else []
+        ask_gpt_with_files(question, file_paths)
+    else:
+        # Original ScriptMonkey functionality
         print(f"Opening prompt editor... ")
         time.sleep(2)
 
