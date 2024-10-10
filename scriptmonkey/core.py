@@ -1,5 +1,6 @@
 import sys
 import traceback
+from collections import defaultdict
 import argparse
 from .openai_client import (
     chatgpt_json,
@@ -10,7 +11,7 @@ from .openai_client import (
     default_prompts,
 )
 from .openai_client.prompting import load_prompt
-from .file_handler import read_file, write_file
+from .file_handler import read_file, write_file, ignored_dirs, important_extensions
 import platform
 import tempfile
 import subprocess
@@ -360,74 +361,67 @@ def generate_readme(description: str, project_structure: dict) -> str:
     return readme_content
 
 
-def generate_directory_tree(start_path, prefix="", max_depth=6, current_depth=0, max_files=10):
+def generate_directory_tree(start_path, prefix="", max_depth=None, current_depth=0, max_files_per_type=5):
     """
-    Generates a directory tree as a string with options to limit depth, ignore directories, and cap the number of files.
+    Generates a directory tree as a string with options to limit files of the same type,
+    ignore directories, and handle critical code files.
     """
-    if current_depth > max_depth:
+    # If max_depth is defined and the current depth exceeds it, stop recursion
+    if max_depth is not None and current_depth > max_depth:
         return ""
 
     tree = ""
     files = sorted(os.listdir(start_path))
-    ignored_dirs = {
-        "venv",
-        ".venv",
-        "dist",
-        "build",
-        "__pycache__",
-        "node_modules",
-        ".next",
-        "out",
-        ".nuxt",
-        "public",
-        "jspm_packages",
-        ".parcel-cache",
-        ".vercel",
-        "target",
-        ".gradle",
-        ".mvn",
-        "bin",
-        "obj",
-        "coverage",
-        "vendor",
-        "storage",
-        "cache",
-        ".git",
-        ".idea",
-        ".vscode",
-        ".DS_Store",
-        "logs",
-        "log",
-        "tmp",
-        "temp",
-        ".angular",
-        ".bundle",
-        "vendor/bundle",
-        "htmlcov",
-        ".mypy_cache",
-        ".pytest_cache",
-    }
 
-    # Limit the number of files displayed
-    if len(files) > max_files:
-        files = files[:max_files]
-        files.append("... (more files omitted)")
+    # Group files by their extensions
+    files_by_extension = defaultdict(list)
+    for name in files:
+        if os.path.isdir(os.path.join(start_path, name)):
+            files_by_extension["<dir>"].append(name)
+        else:
+            _, ext = os.path.splitext(name)
+            files_by_extension[ext].append(name)
 
-    for index, name in enumerate(files):
+    # Build a list of files to display
+    display_files = []
+
+    # Add directories first
+    display_files.extend(sorted(files_by_extension["<dir>"]))
+
+    # Add files, limiting non-important file types
+    for ext, ext_files in files_by_extension.items():
+        if ext == "<dir>":
+            continue
+        if ext in important_extensions:
+            # Include all files of important types
+            display_files.extend(sorted(ext_files))
+        else:
+            # Limit the number of files to `max_files_per_type` for non-important types
+            display_files.extend(sorted(ext_files)[:max_files_per_type])
+            if len(ext_files) > max_files_per_type:
+                display_files.append(f"... ({len(ext_files) - max_files_per_type} more {ext} files omitted)")
+
+    # Iterate over the files and directories to build the tree
+    for index, name in enumerate(display_files):
         path = os.path.join(start_path, name)
 
         # Skip ignored directories
         if os.path.isdir(path) and name in ignored_dirs:
             continue
 
-        connector = "└── " if index == len(files) - 1 else "├── "
+        connector = "└── " if index == len(display_files) - 1 else "├── "
         tree += prefix + connector + name + "\n"
 
         if os.path.isdir(path):
-            new_prefix = prefix + ("    " if index == len(files) - 1 else "│   ")
+            new_prefix = prefix + ("    " if index == len(display_files) - 1 else "│   ")
             tree += generate_directory_tree(
-                path, new_prefix, max_depth=max_depth, current_depth=current_depth + 1, max_files=max_files
+                path,
+                new_prefix,
+                max_depth=max_depth,
+                current_depth=current_depth + 1,
+                max_files_per_type=max_files_per_type,
             )
+
     return tree
 
 
@@ -471,6 +465,7 @@ def ask_gpt_with_files(question, file_paths, include_tree=False):
         tree = generate_directory_tree(start_directory)
         prompt += "### Directory Tree:\n"
         prompt += f"The directory tree of the current working directory is included below (up to a depth of 6 levels):\n\n```\n{tree}\n```\n\n"
+        console.print("### Directory Tree:")
         console.print(tree)
 
     # Output the constructed prompt to the console for transparency
