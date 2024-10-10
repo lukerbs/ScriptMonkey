@@ -145,12 +145,22 @@ def update_api_key():
 # - - - - - NEW FEATURES - - - - -
 
 
-def get_multiline_input_with_editor() -> str:
+def get_multiline_input_with_editor(mode: str) -> str:
     """
     Opens the user's default text editor for entering multi-line input.
     The user is provided with instructions within the temporary file,
     adjusted based on the detected editor.
+
+    :mode: enums['BUILD', 'ASK']
     """
+
+    if mode == "BUILD":
+        purpose = "Project Builder"
+        user_prompt = "Please describe your project in detail below."
+    elif mode == "ASK":
+        purpose = "Prompt Editor"
+        user_prompt = "Please write your question down below."
+
     with tempfile.NamedTemporaryFile(suffix=".txt") as temp_file:
         # Detect the editor from the environment or default based on the OS
         editor = os.environ.get("EDITOR")
@@ -165,37 +175,37 @@ def get_multiline_input_with_editor() -> str:
         # Adjust instructions based on the detected editor
         if "vim" in editor.lower():
             instructions = (
-                "!# 🐒 Welcome to ScriptMonkey's project generator!\n"
-                "!# Please describe your project in detail below.\n"
+                f"!# 🐒 Welcome to ScriptMonkey's {purpose}!\n"
+                f"!# {user_prompt}\n"
                 "!# Use 'i' to start editing, and when you're done, press 'Esc',\n"
                 "!# type ':wq' to save and exit.\n"
                 "!# (Lines starting with '!#' will be ignored.)\n\n"
             )
         elif "nano" in editor.lower():
             instructions = (
-                "!# 🐒 Welcome to ScriptMonkey's project generator!\n"
-                "!# Please describe your project in detail below.\n"
+                f"!# 🐒 Welcome to ScriptMonkey's {purpose}!\n"
+                f"!# {user_prompt}\n"
                 "!# When you're done, press 'Ctrl+O' to save and 'Ctrl+X' to exit.\n"
                 "!# (Lines starting with '!#' will be ignored.)\n\n"
             )
         elif "notepad" in editor.lower():
             instructions = (
-                "!# 🐒 Welcome to ScriptMonkey's project generator!\n"
-                "!# Please describe your project in detail below.\n"
+                f"!# 🐒 Welcome to ScriptMonkey's {purpose}!\n"
+                f"!# {user_prompt}\n"
                 "!# When you're done, save and close the Notepad window.\n"
                 "!# (Lines starting with '!#' will be ignored.)\n\n"
             )
         elif "code" in editor.lower():
             instructions = (
-                "!# 🐒 Welcome to ScriptMonkey's project generator!\n"
-                "!# Please describe your project in detail below.\n"
+                f"!# 🐒 Welcome to ScriptMonkey's {purpose}!\n"
+                f"!# {user_prompt}\n"
                 "!# When you're done, save the file and close the editor window.\n"
                 "!# (Lines starting with '!#' will be ignored.)\n\n"
             )
         else:
             instructions = (
-                "!# 🐒 Welcome to ScriptMonkey's project generator!\n"
-                "!# Please describe your project in detail below.\n"
+                f"!# 🐒 Welcome to ScriptMonkey's {purpose}!\n"
+                f"!# {user_prompt}\n"
                 "!# Save and close the editor when you're done.\n"
                 "!# (Lines starting with '!#' will be ignored.)\n\n"
             )
@@ -465,7 +475,7 @@ def ask_gpt_with_files(question, file_paths, include_tree=False):
         tree = generate_directory_tree(start_directory)
         prompt += "### Directory Tree:\n"
         prompt += f"The directory tree of the current working directory is included below (up to a depth of 6 levels):\n\n```\n{tree}\n```\n\n"
-        console.print("### Directory Tree:")
+        console.print("- - Directory Tree - -")
         console.print(tree)
 
     # Output the constructed prompt to the console for transparency
@@ -476,7 +486,7 @@ def ask_gpt_with_files(question, file_paths, include_tree=False):
     try:
         response = chatgpt(prompt=prompt)
         # Display the response using rich markdown and detect code blocks
-        console.rule("🐒 ScriptMonkey Response 🐒")
+        console.rule("🐒 ANSWER 🐒")
         render_response_with_syntax_highlighting(response)
         console.print("\n")
         console.rule()
@@ -503,7 +513,7 @@ def render_response_with_syntax_highlighting(response):
             console.print(Markdown(pre_text))
 
         # Print the code block with syntax highlighting
-        syntax = Syntax(f"\n{code_content}", language, theme="monokai", line_numbers=True)
+        syntax = Syntax(f"\n{code_content}", language, theme="monokai", line_numbers=False)
         console.print("\n")
         console.print(syntax)
         console.print("\n")
@@ -515,13 +525,19 @@ def render_response_with_syntax_highlighting(response):
         console.print(Markdown(response[last_pos:]))
 
 
+def handle_no_prompt():
+    print(f"\nNo Prompt Provided (Tip: Did you save before closing the editor?).\n🐒 Quitting ScriptMonkey...\n")
+    exit()
+
+
 def main():
     parser = argparse.ArgumentParser(description="ScriptMonkey - Generate Python projects and fix code.")
-    parser.add_argument("--ask", help="Ask a question to ChatGPT", type=str)
+    parser.add_argument("--ask", nargs="?", const=True, help="Ask a question to ChatGPT", type=str)
     parser.add_argument("--files", nargs="*", help="Paths to files to include in the prompt", type=str)
     parser.add_argument("--tree", help="Include a directory tree in the prompt", action="store_true")
     parser.add_argument("--set-api-key", help="Set the OpenAI API key", action="store_true")
     args = parser.parse_args()
+
     print(f"\n- - 🐒 WELCOME TO SCRIPT MONKEY 🐒 - - -\n")
 
     if args.set_api_key:
@@ -529,24 +545,30 @@ def main():
         update_api_key()
         return
 
-    if args.ask:
+    if args.ask is not None:
         # Handle the --ask functionality
-        question = args.ask
+        # Check if the --ask flag was used without a direct question (e.g., `--ask` alone)
+        if args.ask is True:
+            question = get_multiline_input_with_editor(mode="ASK")
+            if not question:
+                handle_no_prompt()
+        else:
+            question = args.ask
+
         file_paths = args.files if args.files else []
         include_tree = args.tree
         ask_gpt_with_files(question, file_paths, include_tree)
+        return
     else:
-        # Original ScriptMonkey functionality
+        # Handle the build project functionality
         print(f"Opening prompt editor... ")
         time.sleep(2)
 
         # Step 1: Get multi-line project description from user
-        project_description = get_multiline_input_with_editor()
+        project_description = get_multiline_input_with_editor(mode="BUILD")
         if not project_description:
-            print(
-                f"\nNo Project Description Provided (Tip: Did you save before closing the editor?).\n🐒 Quitting ScriptMonkey..."
-            )
-            exit()
+            handle_no_prompt()
+
         print(f"Project Description: {project_description}")
 
         # Step 2: Generate the project structure using OpenAI API
@@ -565,3 +587,4 @@ def main():
         with open(readme_path, "w") as readme_file:
             readme_file.write(readme_content)
         print(f"🐒 ScriptMonkey wrote a README.md file at: '{readme_path}'")
+        return

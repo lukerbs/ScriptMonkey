@@ -1,7 +1,9 @@
 
 # ScriptMonkey 🐒
 
-ScriptMonkey is an AI-powered Python package that reimagines how projects are built. It doesn’t just generate simple scripts or templates like traditional LLMs—it creates **entire, multi-file, multi-directory projects with fully custom code**. Complex Python projects can be generated in seconds based on your natural language descriptions, providing everything you need, from models and routes to templates and configuration files. With ScriptMonkey, you can instantly bootstrap new ideas or start complex projects without the tedious setup. And with built-in error detection and automatic fixes, ScriptMonkey keeps your development process smooth and stress-free, letting you focus on what matters most: building.
+ScriptMonkey is an AI-powered CLI tool and Python library that reimagines how projects are built. It doesn’t just generate simple scripts or templates like traditional LLMs—it creates entire, multi-file, multi-directory projects with fully custom code. Complex software projects can be generated in seconds based on your natural language descriptions, providing everything you need, from models and routes to templates and configuration files. With ScriptMonkey, you can instantly bootstrap new ideas or start complex projects without the tedious setup. The tool is perfect for developers looking to quickly prototype, experiment, or build production-ready applications without having to write boilerplate code manually.
+
+Importantly, ScriptMonkey is versatile and can be used to build any type of software project in any programming language. Whether you’re working with Python, JavaScript, Java, C++, or any other language, ScriptMonkey can generate project structures and provide tailored code. Additionally, its context-aware Q&A feature allows you to ask technical questions about projects in any language, with or without providing files for context. You can even use your default editor for longer, multi-line prompts, ensuring that ScriptMonkey can adapt to your specific needs.
 
 ## Features
 - **Custom Project Generation**: Create entire Python projects, not just boilerplate code. ScriptMonkey generates the specific files and directories you need based on your description.
@@ -68,11 +70,23 @@ ScriptMonkey can help answer your technical questions, whether or not you provid
 
 #### How to Use
 
-- **Ask a question**:
+- **Pass a question directly**:
+
+  For quick, short prompts, you can directly pass your question using the `--ask` parameter:
 
   ```bash
   scriptmonkey --ask "What are the best practices for database indexing?"
   ```
+
+- **Use your default editor for longer prompts**:
+
+  If you need to provide a more detailed or multi-line prompt, simply use `--ask` without specifying a question. This will open up your default text editor (e.g., `vim`, `nano`, `notepad`) where you can write out your question or prompt:
+
+  ```bash
+  scriptmonkey --ask
+  ```
+
+  After you write your question in the editor and save and close it, ScriptMonkey will use the content as the question. This is especially useful for longer or more complex queries that require more explanation.
 
 - **Ask a question with files**:
 
@@ -90,7 +104,7 @@ ScriptMonkey can help answer your technical questions, whether or not you provid
   scriptmonkey --ask "How do I organize this project better?" --tree
   ```
 
-  The `--tree` flag will include a tree representation of the current working directory (up to 6 levels deep, excluding common large folders) in the context for your question. This is particularly useful when you want to get feedback on the structure of your codebase or when your question relates to the project organization.
+  The `--tree` flag will include a tree representation of the current working directory in the context for your question. This is particularly useful when you want to get feedback on the structure of your codebase or when your question relates to the project organization. It can be used in tandem with the `--files` flag to provide additional context about how those files fit within the larger context of the project.
 
   ScriptMonkey will analyze your question and any provided files or the directory tree to give a detailed, markdown-formatted response with explanations and code suggestions, if applicable. This feature is great for in-depth guidance on code optimization, architecture, or general programming questions.
 
