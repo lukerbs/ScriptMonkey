@@ -88,7 +88,7 @@ ScriptMonkey can help answer your technical questions, whether or not you provid
 
   After you write your question in the editor and save and close it, ScriptMonkey will use the content as the question. This is especially useful for longer or more complex queries that require more explanation.
 
-- **Ask a question with files**:
+- **Ask a question about specific local files**:
 
   ```bash
   scriptmonkey --ask "Can you help me optimize this function?" --files ./path/to/file1.py ./path/to/file2.js
