@@ -360,7 +360,78 @@ def generate_readme(description: str, project_structure: dict) -> str:
     return readme_content
 
 
-def ask_gpt_with_files(question, file_paths):
+def generate_directory_tree(start_path, prefix="", max_depth=6, current_depth=0, max_files=10):
+    """
+    Generates a directory tree as a string with options to limit depth, ignore directories, and cap the number of files.
+    """
+    if current_depth > max_depth:
+        return ""
+
+    tree = ""
+    files = sorted(os.listdir(start_path))
+    ignored_dirs = {
+        "venv",
+        ".venv",
+        "dist",
+        "build",
+        "__pycache__",
+        "node_modules",
+        ".next",
+        "out",
+        ".nuxt",
+        "public",
+        "jspm_packages",
+        ".parcel-cache",
+        ".vercel",
+        "target",
+        ".gradle",
+        ".mvn",
+        "bin",
+        "obj",
+        "coverage",
+        "vendor",
+        "storage",
+        "cache",
+        ".git",
+        ".idea",
+        ".vscode",
+        ".DS_Store",
+        "logs",
+        "log",
+        "tmp",
+        "temp",
+        ".angular",
+        ".bundle",
+        "vendor/bundle",
+        "htmlcov",
+        ".mypy_cache",
+        ".pytest_cache",
+    }
+
+    # Limit the number of files displayed
+    if len(files) > max_files:
+        files = files[:max_files]
+        files.append("... (more files omitted)")
+
+    for index, name in enumerate(files):
+        path = os.path.join(start_path, name)
+
+        # Skip ignored directories
+        if os.path.isdir(path) and name in ignored_dirs:
+            continue
+
+        connector = "└── " if index == len(files) - 1 else "├── "
+        tree += prefix + connector + name + "\n"
+
+        if os.path.isdir(path):
+            new_prefix = prefix + ("    " if index == len(files) - 1 else "│   ")
+            tree += generate_directory_tree(
+                path, new_prefix, max_depth=max_depth, current_depth=current_depth + 1, max_files=max_files
+            )
+    return tree
+
+
+def ask_gpt_with_files(question, file_paths, include_tree=False):
     """
     Constructs a detailed and flexible prompt for ChatGPT using a question and optionally including content from specified files.
     """
@@ -393,6 +464,14 @@ def ask_gpt_with_files(question, file_paths):
             "No specific files have been provided, so please base your response solely on the question above. "
             "If the response includes any code examples or technical explanations, please use Markdown formatting with language-specific code blocks for clarity.\n"
         )
+
+    # Include the directory tree if the flag is set
+    if include_tree:
+        start_directory = os.getcwd()
+        tree = generate_directory_tree(start_directory)
+        prompt += "### Directory Tree:\n"
+        prompt += f"The directory tree of the current working directory is included below (up to a depth of 6 levels):\n\n```\n{tree}\n```\n\n"
+        console.print(tree)
 
     # Output the constructed prompt to the console for transparency
     console.rule("🐒 ScriptMonkey is Thinking 🐒")
@@ -445,6 +524,7 @@ def main():
     parser = argparse.ArgumentParser(description="ScriptMonkey - Generate Python projects and fix code.")
     parser.add_argument("--ask", help="Ask a question to ChatGPT", type=str)
     parser.add_argument("--files", nargs="*", help="Paths to files to include in the prompt", type=str)
+    parser.add_argument("--tree", help="Include a directory tree in the prompt", action="store_true")
     parser.add_argument("--set-api-key", help="Set the OpenAI API key", action="store_true")
     args = parser.parse_args()
     print(f"\n- - 🐒 WELCOME TO SCRIPT MONKEY 🐒 - - -\n")
@@ -458,7 +538,8 @@ def main():
         # Handle the --ask functionality
         question = args.ask
         file_paths = args.files if args.files else []
-        ask_gpt_with_files(question, file_paths)
+        include_tree = args.tree
+        ask_gpt_with_files(question, file_paths, include_tree)
     else:
         # Original ScriptMonkey functionality
         print(f"Opening prompt editor... ")

@@ -28,7 +28,7 @@ pip install scriptmonkey
 
 ## Usage
 
-### Project Generation with `scriptmonkey`
+### Project Generation with `scriptmonkey` CLI Tool
 
 ScriptMonkey can generate a complete, custom-coded project structure based on a description you provide. This feature helps you quickly set up new projects with the necessary files and folders.
 
@@ -62,13 +62,13 @@ I need a Flask-based web application for managing a book library. The applicatio
 
 ScriptMonkey will use this description to create a project structure and code files for you in a directory named `generated_project`.
 
-### Context-Aware Q&A with `scriptmonkey --ask`
+### Context-Aware Q&A with `scriptmonkey --ask` CLI Tool
 
-ScriptMonkey can help answer your technical questions, whether or not you provide code files for context. This feature allows you to leverage the power of ChatGPT to ask questiona about files, clarify concepts, get code reviews, or understand best practices in various programming languages.
+ScriptMonkey can help answer your technical questions, whether or not you provide code files for context. This feature allows you to leverage the power of ChatGPT to ask questions about files, clarify concepts, get code reviews, or understand best practices in various programming languages.
 
 #### How to Use
 
-- **Ask a question without files**:
+- **Ask a question**:
 
   ```bash
   scriptmonkey --ask "What are the best practices for database indexing?"
@@ -80,7 +80,19 @@ ScriptMonkey can help answer your technical questions, whether or not you provid
   scriptmonkey --ask "Can you help me optimize this function?" --files ./path/to/file1.py ./path/to/file2.js
   ```
 
-  ScriptMonkey will analyze your question and any provided files to give a detailed, markdown-formatted response with explanations and code suggestions, if applicable. This feature is great for in-depth guidance on code optimization, architecture, or general programming questions.
+  The `--files` flag allows you to provide specific files as context for your question. ScriptMonkey will include the contents of these files in its analysis, allowing it to reference the actual code or data you are working with. This is particularly useful for getting detailed feedback on specific code snippets, debugging issues, or seeking advice on how to improve certain parts of your project.
+  
+  When you use `--files`, ScriptMonkey will read the contents of each provided file, include them in the prompt, and tailor its response based on the combined context of your question and the file contents. This feature ensures that you get precise, context-aware answers, helping you solve code challenges or understand complex concepts more effectively.
+
+- **Ask a question with a directory tree**:
+
+  ```bash
+  scriptmonkey --ask "How do I organize this project better?" --tree
+  ```
+
+  The `--tree` flag will include a tree representation of the current working directory (up to 6 levels deep, excluding common large folders) in the context for your question. This is particularly useful when you want to get feedback on the structure of your codebase or when your question relates to the project organization.
+
+  ScriptMonkey will analyze your question and any provided files or the directory tree to give a detailed, markdown-formatted response with explanations and code suggestions, if applicable. This feature is great for in-depth guidance on code optimization, architecture, or general programming questions.
 
 ### Error Handling with `scriptmonkey.run()`
 
