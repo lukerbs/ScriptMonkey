@@ -21,6 +21,7 @@ import time
 from pprint import pprint
 import os
 import platform
+import pyperclip
 
 import re
 from rich.console import Console
@@ -525,6 +526,34 @@ def render_response_with_syntax_highlighting(response):
         console.print(Markdown(response[last_pos:]))
 
 
+def copy_files_to_clipboard(file_paths, include_tree=True):
+    """
+    Reads the content from the specified files and copies it to the clipboard in the specified format.
+    Optionally includes a project directory tree.
+    """
+    formatted_output = "- - - - - - - - - -\nHere are some details about the project.\n\n"
+
+    for path in file_paths:
+        try:
+            content = read_file(path)
+            formatted_output += f"# {path}\n{content}\n\n- - - - - - - - - -\n"
+        except FileNotFoundError:
+            console.print(f"[bold yellow]Warning: {path} not found. Skipping this file.[/bold yellow]")
+        except Exception as e:
+            console.print(f"[bold red]Error reading {path}: {e}[/bold red]")
+
+    # Include the directory tree if requested
+    if include_tree:
+        start_directory = os.getcwd()
+        tree = generate_directory_tree(start_directory)
+        formatted_output += "- - - - - - - - - -\n\n# PROJECT TREE\n"
+        formatted_output += f"{tree}\n\n"
+
+    # Copy the formatted output to the clipboard
+    pyperclip.copy(formatted_output)
+    console.print("[green]🐒 Content has been copied to the clipboard.[/green]")
+
+
 def handle_no_prompt():
     print(f"\nNo Prompt Provided (Tip: Did you save before closing the editor?).\n🐒 Quitting ScriptMonkey...\n")
     exit()
@@ -536,6 +565,9 @@ def main():
     parser.add_argument("--files", nargs="*", help="Paths to files to include in the prompt", type=str)
     parser.add_argument("--tree", help="Include a directory tree in the prompt", action="store_true")
     parser.add_argument("--set-api-key", help="Set the OpenAI API key", action="store_true")
+    parser.add_argument(
+        "--copy", help="Copy the content of the specified files to the clipboard", action="store_true"
+    )  # New --copy flag
     args = parser.parse_args()
 
     print(f"\n- - 🐒 WELCOME TO SCRIPT MONKEY 🐒 - - -\n")
@@ -543,6 +575,16 @@ def main():
     if args.set_api_key:
         # Handle setting the API key
         update_api_key()
+        return
+
+    if args.copy:
+        # Handle the --copy functionality
+        file_paths = args.files if args.files else []
+        if not file_paths:
+            console.print("[bold red]❌ No files specified to copy. Use --files to specify file paths.[/bold red]")
+            return
+        include_tree = args.tree
+        copy_files_to_clipboard(file_paths)
         return
 
     if args.ask is not None:

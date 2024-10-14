@@ -108,6 +108,43 @@ ScriptMonkey can help answer your technical questions, whether or not you provid
 
   ScriptMonkey will analyze your question and any provided files or the directory tree to give a detailed, markdown-formatted response with explanations and code suggestions, if applicable. This feature is great for in-depth guidance on code optimization, architecture, or general programming questions.
 
+### Copy Key Files and Project Details with `--copy`
+
+ScriptMonkey's new `--copy` feature is designed to streamline the process of copying critical code files and project structure details into your clipboard, making it easier to ask questions to LLMs like ChatGPT or Claude. This feature formats the copied content in a neat way that includes file contents and the directory tree, making it simple to paste into a conversation for contextual help.
+
+#### How to Use
+
+- **Copy file contents directly**:
+
+  You can use the --copy flag to quickly copy the contents of specified files into your clipboard, neatly formatted for easy sharing with an LLM. When combined with the --files flag, ScriptMonkey will copy the contents of the selected files along with a complete directory tree of your project. This provides additional context, helping LLMs better understand your project’s structure:
+
+  ```bash
+  scriptmonkey --copy --files path/to/file1.py path/to/file2.js
+  ```
+
+  Your files and project directory tree are automatically copied to your clipboard in the format:
+
+  ```
+  - - - - - - - - - -
+  Here are some details about the project.
+
+  # path/to/file1.py
+  <content from file1.py>
+
+  - - - - - - - - - -
+
+  # path/to/file2.js
+  <content from file2.js>
+
+  - - - - - - - - - -
+
+  # PROJECT TREE
+  <directory structure>
+  ```
+
+
+
+
 ### Error Handling with `scriptmonkey.run()`
 
 ScriptMonkey doesn't just build projects; it also makes debugging a breeze.
