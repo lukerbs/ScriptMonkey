@@ -303,6 +303,13 @@ def gather_project_context(project_description: str, project_files: list) -> str
     return context
 
 
+def remove_code_block_lines(input_string):
+    """Removes any lines from the input string that contain '```'."""
+    lines = input_string.splitlines()
+    filtered_lines = [line for line in lines if "```" not in line]
+    return "\n".join(filtered_lines)
+
+
 def generate_code_for_file(file_description: dict, project_description: str, project_files: list) -> str:
     """
     Generates content for a given file based on its description using the chatgpt() function.
@@ -332,7 +339,8 @@ def generate_code_for_file(file_description: dict, project_description: str, pro
         f"Write the complete content for a {content_type_description} that fulfills the following requirements. "
         "Consider the context of the entire project when generating the content and make use of imports where available and appropriate."
         "Use relevant imports, references, and appropriate formatting or structure where necessary. Do not add extra commentary or explanation. "
-        "Make sure to return the content directly, without wrapping it in any code fences like triple quotes or backticks."
+        "Make sure to return the content directly, without wrapping it in any code fences like triple quotes or backticks ."
+        "i.e. DO NOT include any triple backtrick wrappers at all for any code, (e.g. ```python<content here>```) just return the code as plain text."
         f"\n\nFile Description: {file_description['description']}"
         f"\n\n{context}\n"
     )
@@ -350,8 +358,7 @@ def generate_code_for_file(file_description: dict, project_description: str, pro
     generated_content = chatgpt(prompt=instructions)
 
     # Clean up any unintended code blocks
-    if f"```{file_extension}" in generated_content:
-        generated_content = generated_content.split(f"```{file_extension}")[1].split("```")[0].strip()
+    generated_content = remove_code_block_lines(generated_content)
 
     return generated_content
 
