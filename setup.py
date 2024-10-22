@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="scriptmonkey",
-    version="1.4.2",
+    version="1.4.4",
     description="A Python package that generates complex software projects and fixes errors in your code using OpenAI's GPT API.",
     long_description=open("README.md", "r").read(),
     long_description_content_type="text/markdown",
@@ -45,6 +45,10 @@ setup(
         "project bootstrap",
         "custom code generation",
         "python package",
+        "cursor",
+        "devin",
+        "copilot",
+        "automatic code correction",
     ],
     package_data={"scriptmonkey.openai_client": ["prompts/*.txt"]},
     include_package_data=True,
